@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:flutter/foundation.dart';  
 import 'providers/ingredient_provider.dart';
 import 'providers/recommend_provider.dart';
 import 'screens/ingredient_select_screen.dart';
 
 void main() {
+  // Windows/Linux/macOS에서 sqflite 초기화
+  if (!kIsWeb) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(const MyApp());
 }
 
