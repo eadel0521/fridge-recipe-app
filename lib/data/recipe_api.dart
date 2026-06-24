@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/recipe.dart';
 
 class RecipeApi {
+  // TODO: 발급받은 인증키로 교체
   static const String apiKey = 'cbec2b8491c44bc08d70';
   static const String baseUrl = 'http://openapi.foodsafetykorea.go.kr/api';
   static const String serviceId = 'COOKRCP01';
@@ -15,12 +16,16 @@ class RecipeApi {
       '$baseUrl/$apiKey/$serviceId/json/$startIdx/$endIdx',
     );
 
+    // ignore: avoid_print
     print('API 호출 URL: $url');
 
     try {
       final response = await http.get(url);
+
+      // ignore: avoid_print
       print('응답 코드: ${response.statusCode}');
-      print('응답 내용 앞부분: ${response.body.substring(0, 200)}');
+      // ignore: avoid_print
+      print('응답 앞부분: ${response.body.length > 200 ? response.body.substring(0, 200) : response.body}');
 
       if (response.statusCode != 200) {
         throw Exception('레시피 API 호출 실패: ${response.statusCode}');
@@ -28,12 +33,15 @@ class RecipeApi {
 
       final body = json.decode(utf8.decode(response.bodyBytes));
       final rows = body[serviceId]?['row'] as List<dynamic>?;
+
+      // ignore: avoid_print
       print('파싱된 레시피 수: ${rows?.length ?? 0}');
 
       if (rows == null) return [];
 
       return rows.map((row) => _parseRow(row)).toList();
     } catch (e) {
+      // ignore: avoid_print
       print('API 오류: $e');
       return [];
     }

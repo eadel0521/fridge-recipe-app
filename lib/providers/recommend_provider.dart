@@ -14,20 +14,33 @@ class RecommendProvider extends ChangeNotifier {
 
   List<RecipeMatchResult> get matchResults => _matchResults;
 
-  // 앱 시작 시 호출: 로컬 DB에 레시피 없으면 API에서 받아와 캐싱
   Future<void> initRecipes() async {
+    // ignore: avoid_print
+    print('initRecipes 시작');
     isLoading = true;
     notifyListeners();
 
     try {
       final count = await _dbHelper.getRecipeCount();
+      // ignore: avoid_print
+      print('DB 레시피 수: $count');
+
       if (count == 0) {
+        // ignore: avoid_print
+        print('API 호출 시작');
         final fetched = await _api.fetchRecipes(startIdx: 1, endIdx: 1000);
+        // ignore: avoid_print
+        print('API에서 받은 레시피 수: ${fetched.length}');
         await _dbHelper.insertRecipes(fetched);
       }
+
       _allRecipes = await _dbHelper.getAllRecipes();
+      // ignore: avoid_print
+      print('최종 로드된 레시피 수: ${_allRecipes.length}');
       errorMessage = null;
     } catch (e) {
+      // ignore: avoid_print
+      print('initRecipes 오류: $e');
       errorMessage = '레시피 데이터를 불러오지 못했습니다: $e';
     }
 
@@ -35,16 +48,27 @@ class RecommendProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 선택된 재료 이름 리스트를 받아서 매칭 수행
   void recommend(List<String> selectedIngredientNames) {
+    // ignore: avoid_print
     print('=== 디버그 ===');
+    // ignore: avoid_print
     print('전체 레시피 수: ${_allRecipes.length}');
+    // ignore: avoid_print
     print('선택한 재료: $selectedIngredientNames');
+
     if (_allRecipes.isNotEmpty) {
+      // ignore: avoid_print
       print('첫 번째 레시피: ${_allRecipes[0].name}');
+      // ignore: avoid_print
       print('첫 번째 레시피 재료: ${_allRecipes[0].ingredientNames}');
     }
-    
+
+    if (selectedIngredientNames.isEmpty) {
+      _matchResults = [];
+      notifyListeners();
+      return;
+    }
+
     final selectedSet = selectedIngredientNames.toSet();
     final results = <RecipeMatchResult>[];
 
@@ -53,7 +77,7 @@ class RecommendProvider extends ChangeNotifier {
           .where((name) => selectedSet.contains(name))
           .toList();
 
-      if (matched.isEmpty) continue; // 하나도 안 겹치면 추천 대상에서 제외
+      if (matched.isEmpty) continue;
 
       final missing = recipe.ingredientNames
           .where((name) => !selectedSet.contains(name))
@@ -68,9 +92,7 @@ class RecommendProvider extends ChangeNotifier {
       );
     }
 
-    // 매칭률 높은 순 정렬
     results.sort((a, b) => b.matchRate.compareTo(a.matchRate));
-
     _matchResults = results;
     notifyListeners();
   }
